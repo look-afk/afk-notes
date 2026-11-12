@@ -49,7 +49,7 @@ print(dp[r]-dp[l-1])</code></pre>
 <p>Вот так легко можно создать массив который будет складывать сумму всех элементов массива.</p>
 <p>Так для того что бы решить эту задачу нам не достаточно только знания префикс сумма. <br>Давайте немного усложним задачу. Пусть для каждого l,r мы будем вычислять </p>
 <pre><code class="lang-python">a[l] + 2a[l+1] + 3a[l+2]... (r-l+1)a[r]</code></pre>
-<p>Для этого мы применим хитрый ход, будем хранить в другом массиве веса первого. <br>Идея S[i] = a[1] + a[2] + a[3] ... + a[i]   W[i] = 1<em>a[1] + 2</em>a[2] + ... i*a[i] <br>Тогда для l,r  <br><img src="https://look-afk.github.io/afk-notes/notes%5CCodeforcesNotes%5CCodeforcesNotes%5CPasted%20image%2020261112101336.png" alt="pasted image 20261112101336.png"></p>
+<p>Для этого мы применим хитрый ход, будем хранить в другом массиве веса первого. <br>Идея S[i] = a[1] + a[2] + a[3] ... + a[i]   W[i] = 1<em>a[1] + 2</em>a[2] + ... i*a[i] <br>Тогда для l,r  <br><img src="https://look-afk.github.io/afk-notes/notes/CodeforcesNotes/CodeforcesNotes/Pasted%20image%2020261112101336.png" alt="pasted image 20261112101336.png"></p>
 <p>Вот как можно это реализовать </p>
 <pre><code class="lang-python">n,k = map(int,input().split())
 s = list(map(int,input().split()))
@@ -72,7 +72,15 @@ for i in range(k):
 <p>В результате для этого массива a мы получим </p>
 <pre><code class="lang-python">dp = [0, 3, 5, 11, 12, 17]
 pr = [0, 3, 7, 25, 29, 54]</code></pre>
-<p>1 Первая часть pr[r] - pr[l-1]<br>Это взвешанная сумма на отрезке от l lо r но с неправильными весами</p>
+<p>1 Первая часть pr[r] - pr[l-1]<br>Это взвешенная сумма на отрезке от l до r но с неправильными весами например для запроса pr[4] - pr[1] = 29 - 3 = 26 <br>Что же там внутри ?</p>
+<pre><code>2*a2 + 3*a3 + 4*a4
+= 2*2 + 3*6 + 4*1
+= 26</code></pre>
+<p>А нам нужно </p>
+<pre><code>1*a2 + 2*a3 + 3*a4
+= 1*2 + 2*6 + 3*1
+= 17</code></pre>
+<p>Ошибка в том что каждый вес больше на ровно l - 1</p>
 </div>
 </body>
 </html>
