@@ -62,8 +62,9 @@ for i in range(1,n+1):
 for i in range(1,n+1):
     pr[i] = pr[i-1] + s[i-1] * i
 for i in range(k):
-		l,r = map(int,input().split())
-
+	l,r = map(int,input().split())
+	ans = pr[r] - pr[l-1] - (l - 1) * (dp[r] - dp[l-1])
+print(ans)
 </code></pre>
 </div>
 </body>
