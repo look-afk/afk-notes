@@ -23,10 +23,11 @@ CONFIG_PATH = SCRIPT_DIR / "afk_config.json"
 WATCH_LOG = SCRIPT_DIR / "afk_watch.log"
 WATCH_LOCK = SCRIPT_DIR / "afk_watch.lock"
 WATCH_PID = SCRIPT_DIR / "afk_watch.pid"
-REPO_DIR = Path(r"C:\Users\Zafar\afk-site")
-REPO_URL = "https://github.com/look-afk/afk-notes.git"
-SITE_URL = "https://look-afk.github.io/afk-notes/"
-DEFAULT_FOLDER = Path(r"C:\Users\Zafar\Documents\ObsidianNotes")
+REPO_DIR = SCRIPT_DIR / "afk-site"  # переопределяется init_runtime() из конфига
+REPO_URL = ""
+SITE_URL = ""
+GH_LINK = ""
+DEFAULT_FOLDER = Path.home() / "Documents" / "ObsidianNotes"
 ASSET_EXT = {".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".pdf", ".mp3", ".mp4", ".webm"}
 SKIP_DIRS = {".obsidian", ".trash", ".git", ".smart-connections", "node_modules"}
 IDLE_SECONDS = 25  # публиковать только после 25 секунд без изменений (дописал — заливается)
@@ -94,6 +95,53 @@ def save_config(cfg):
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(cfg, f, ensure_ascii=False, indent=2)
     tmp.replace(CONFIG_PATH)
+
+
+def derive_site_url(repo_url):
+    m = re.match(
+        r"(?:https://github\.com/|git@github\.com:|ssh://git@github\.com/)"
+        r"([^/]+)/([^/]+?)(?:\.git)?$",
+        repo_url or "",
+    )
+    if not m:
+        return ""
+    user, repo = m.group(1), m.group(2)
+    if repo.lower() == user.lower() + ".github.io":
+        return f"https://{user.lower()}.github.io/"
+    return f"https://{user.lower()}.github.io/{repo}/"
+
+
+def git_remote_origin():
+    try:
+        r = subprocess.run(
+            ["git", "-C", str(REPO_DIR), "remote", "get-url", "origin"],
+            capture_output=True, text=True, timeout=10,
+            creationflags=0x08000000 if os.name == "nt" else 0,
+        )
+        return r.stdout.strip() if r.returncode == 0 else ""
+    except Exception:
+        return ""
+
+
+def init_runtime():
+    global REPO_DIR, REPO_URL, SITE_URL, GH_LINK
+    cfg = load_config()
+    REPO_DIR = Path(cfg.get("repo_dir") or SCRIPT_DIR / "afk-site")
+    REPO_URL = cfg.get("repo_url") or git_remote_origin()
+    SITE_URL = cfg.get("site_url") or derive_site_url(REPO_URL)
+    GH_LINK = REPO_URL[:-4] if REPO_URL.endswith(".git") else REPO_URL
+    return cfg
+
+
+init_runtime()
+
+
+def gh_anchor(cls, inner):
+    if not GH_LINK:
+        return ""
+    cls_attr = f' class="{cls}"' if cls else ""
+    return (f'<a{cls_attr} href="{GH_LINK}" target="_blank" rel="noopener" '
+            f'aria-label="GitHub, откроется в новой вкладке">{inner}</a>')
 
 
 def hash_file(path):
@@ -367,9 +415,7 @@ def sidebar_html(back, folders, active=None, total=0, is_index=False):
         + "\n".join(parts)
         + '\n</nav>\n'
         f'<div class="side-foot">'
-        f'<a href="https://github.com/look-afk/afk-notes" target="_blank" '
-        f'rel="noopener" aria-label="GitHub, откроется в новой вкладке">'
-        f'{ICON_GITHUB}<span>GitHub</span></a>\n'
+        f'{gh_anchor("", ICON_GITHUB + "<span>GitHub</span>")}\n'
         f'</div>\n'
         f'</aside>'
     )
@@ -730,7 +776,7 @@ def page_html(title, body, site_path, folder="", mtime="", folders=None):
 <div class="main-col">
 <header class="topbar">
 <nav class="crumbs" aria-label="Хлебные крошки">{''.join(crumbs)}</nav>
-<span class="tb-right">{date}<a class="tb-gh" href="https://github.com/look-afk/afk-notes" target="_blank" rel="noopener" aria-label="GitHub, откроется в новой вкладке">{ICON_GITHUB}</a><a class="btn-ghost" href="{back}index.html">&larr; Все заметки</a></span>
+<span class="tb-right">{date}{gh_anchor("tb-gh", ICON_GITHUB)}<a class="btn-ghost" href="{back}index.html">&larr; Все заметки</a></span>
 </header>
 <main id="content">
 <article class="content">
@@ -825,7 +871,7 @@ def build_index(cfg, notes, folder_names):
 <div class="main-col">
 <header class="topbar">
 <span class="tb-title">Все заметки</span>
-<span class="tb-right"><span class="np-date">обновлено {now}</span><a class="tb-gh" href="https://github.com/look-afk/afk-notes" target="_blank" rel="noopener" aria-label="GitHub, откроется в новой вкладке">{ICON_GITHUB}</a></span>
+<span class="tb-right"><span class="np-date">обновлено {now}</span>{gh_anchor("tb-gh", ICON_GITHUB)}</span>
 </header>
 <main id="content">
 {body}
@@ -873,6 +919,8 @@ def git(*args, cwd=None):
 
 def ensure_repo():
     if not (REPO_DIR / ".git").exists():
+        if not REPO_URL:
+            return False, "Репозиторий не задан — запусти: py afk.py --setup"
         REPO_DIR.parent.mkdir(parents=True, exist_ok=True)
         r = subprocess.run(
             ["git", "clone", REPO_URL, str(REPO_DIR)],
@@ -1413,8 +1461,247 @@ def show_status(cfg):
     input(f"\n{C.DIM}Enter — назад{C.R}")
 
 
+def ask(prompt, default=""):
+    try:
+        v = input(prompt).strip()
+        return v or default
+    except EOFError:
+        return default
+
+
+def ask_yn(prompt, default=False):
+    hint = "[Y/n]" if default else "[y/N]"
+    v = ask(f"{prompt} {hint} ").lower()
+    if not v:
+        return default
+    return v in ("y", "yes", "д", "да")
+
+
+def ok_line(text):
+    print(f"  {C.GREEN}✓{C.R} {text}")
+
+
+def bad_line(text):
+    print(f"  {C.RED}✗{C.R} {text}")
+
+
+def info_line(text):
+    print(f"  {C.DIM}·{C.R} {text}")
+
+
+def try_winget(pkg_id, title):
+    if not shutil.which("winget"):
+        bad_line(f"{title}: winget не найден — установи вручную и повтори --setup")
+        return False
+    print(f"  {C.CYAN}→{C.R} Устанавливаю {title}...")
+    try:
+        r = subprocess.run(
+            ["winget", "install", "--id", pkg_id, "-e",
+             "--accept-source-agreements", "--accept-package-agreements"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=600,
+        )
+    except Exception as e:
+        bad_line(f"Ошибка установки {title}: {e}")
+        return False
+    if r.returncode == 0:
+        ok_line(f"{title} установлен")
+        info_line("перезапусти терминал и повтори: py afk.py --setup")
+        return True
+    bad_line(f"{title}: установка не удалась — {r.stderr.strip()[:200]}")
+    return False
+
+
+def gh_login_user():
+    try:
+        r = subprocess.run(
+            ["gh", "auth", "status"], capture_output=True, text=True,
+            encoding="utf-8", errors="replace", timeout=20,
+        )
+        if r.returncode != 0:
+            return None
+        text = re.sub(r"\x1b\[[0-9;]*m", "", (r.stdout or "") + (r.stderr or ""))
+        m = re.search(r"(?:as|account)\s+(\S+)", text)
+        return m.group(1) if m else None
+    except Exception:
+        return None
+
+
+def setup_mode():
+    print(f"\n  {C.BOLD}AFK Notes — настройка{C.R}")
+    print(f"  {C.DIM}конфиг: {CONFIG_PATH}{C.R}\n")
+
+    print(f"{C.BOLD}1. Git{C.R}")
+    git_ok = shutil.which("git") is not None
+    if git_ok:
+        try:
+            v = subprocess.run(["git", "--version"], capture_output=True,
+                               text=True, timeout=10).stdout.strip()
+        except Exception:
+            v = "git"
+        ok_line(v)
+    else:
+        bad_line("Git не установлен")
+        if ask_yn("  Установить Git сейчас?"):
+            try_winget("Git.Git", "Git")
+            git_ok = shutil.which("git") is not None
+
+    print(f"\n{C.BOLD}2. GitHub CLI (gh){C.R}")
+    gh_ok = shutil.which("gh") is not None
+    if gh_ok:
+        ok_line("gh установлен")
+    else:
+        bad_line("GitHub CLI не установлен — нужен, чтобы создавать репозитории")
+        if ask_yn("  Установить GitHub CLI сейчас?"):
+            try_winget("GitHub.cli", "GitHub CLI")
+            gh_ok = shutil.which("gh") is not None
+
+    print(f"\n{C.BOLD}3. Доступ к GitHub{C.R}")
+    gh_user = gh_login_user() if gh_ok else None
+    if gh_user:
+        ok_line(f"авторизован как {gh_user}")
+    elif gh_ok:
+        bad_line("не авторизован")
+        if ask_yn("  Запустить вход gh auth login?"):
+            try:
+                subprocess.call(["gh", "auth", "login", "--hostname", "github.com",
+                                 "--git-protocol", "https", "--web"])
+            except Exception:
+                pass
+            gh_user = gh_login_user()
+            if gh_user:
+                ok_line(f"авторизован как {gh_user}")
+            else:
+                bad_line("вход не завершён — создание репозитория будет недоступно")
+    else:
+        bad_line("gh не установлен — пропускаю")
+
+    print(f"\n{C.BOLD}4. Папки заметок{C.R}")
+    cfg = load_config()
+    if cfg["folders"]:
+        ok_line(f"{len(cfg['folders'])} папок в конфиге")
+        for fp in cfg["folders"]:
+            mark = C.GREEN if Path(fp).exists() else C.RED
+            print(f"    {mark}•{C.R} {fp}")
+    else:
+        bad_line("папки не заданы")
+        while True:
+            p = ask("  Путь к папке с заметками (Enter — пропустить): ")
+            if not p:
+                break
+            if Path(p).exists():
+                cfg["folders"].append(str(Path(p).resolve()))
+                ok_line(f"добавлена: {p}")
+            else:
+                bad_line("папка не найдена, попробуй ещё")
+        save_config(cfg)
+
+    print(f"\n{C.BOLD}5. Репозиторий{C.R}")
+    repo_exists = (REPO_DIR / ".git").exists()
+    if repo_exists:
+        r = git("ls-remote", "--heads", "origin")
+        if r.returncode == 0:
+            ok_line(f"клон найден: {REPO_DIR}")
+            ok_line(f"origin доступен: {REPO_URL or git_remote_origin()}")
+        else:
+            bad_line(f"origin недоступен: {(r.stderr or r.stdout).strip()[:200]}")
+        cfg = load_config()
+        changed = False
+        for key, val in (("repo_dir", str(REPO_DIR)),
+                         ("repo_url", REPO_URL or git_remote_origin()),
+                         ("site_url", SITE_URL),
+                         ("gh_link", GH_LINK)):
+            if val and cfg.get(key) != val:
+                cfg[key] = val
+                changed = True
+        if changed:
+            save_config(cfg)
+            ok_line("недостающие параметры дописаны в конфиг")
+    elif REPO_URL and git_ok:
+        info_line(f"клонирую {REPO_URL} ...")
+        good, err = ensure_repo()
+        if good:
+            ok_line(f"клонирован: {REPO_DIR}")
+        else:
+            bad_line(f"клон не удался: {err}")
+    elif gh_ok and gh_user and git_ok:
+        print(f"  {C.DIM}репозитория ещё нет — создам новый{C.R}")
+        name = ask(f"  Имя репозитория [{gh_user}.github.io]: ",
+                   default=f"{gh_user}.github.io")
+        r = subprocess.run(
+            ["gh", "repo", "create", name, "--public",
+             "--description", "AFK Notes"],
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=60,
+        )
+        if r.returncode != 0 and "already exists" not in (r.stderr or ""):
+            bad_line(f"создание не удалось: {(r.stderr or r.stdout).strip()[:200]}")
+        else:
+            REPO_URL_NEW = f"https://github.com/{gh_user}/{name}.git"
+            ok_line(f"репозиторий создан: github.com/{gh_user}/{name}")
+            r2 = subprocess.run(
+                ["git", "clone", REPO_URL_NEW, str(REPO_DIR)],
+                capture_output=True, text=True, encoding="utf-8",
+                errors="replace",
+                creationflags=0x08000000 if os.name == "nt" else 0,
+            )
+            if r2.returncode == 0:
+                ok_line(f"клонирован: {REPO_DIR}")
+                cfg = load_config()
+                cfg["repo_dir"] = str(REPO_DIR)
+                cfg["repo_url"] = REPO_URL_NEW
+                site = derive_site_url(REPO_URL_NEW)
+                cfg["site_url"] = site
+                cfg["gh_link"] = REPO_URL_NEW[:-4]
+                save_config(cfg)
+                init_runtime()
+                info_line("первый запуск публикации...")
+                changes, msg = publish(cfg)
+                if msg and msg.startswith("OK"):
+                    ok_line(msg)
+                elif msg:
+                    info_line(msg)
+                if gh_ok:
+                    owner, repo_name = gh_user, name
+                    pr = subprocess.run(
+                        ["gh", "api", "-X", "POST",
+                         f"repos/{owner}/{repo_name}/pages",
+                         "-f", "source[branch]=main", "-f", "source[path]=/"],
+                        capture_output=True, text=True, encoding="utf-8",
+                        errors="replace", timeout=30,
+                    )
+                    if pr.returncode == 0 or "already exists" in (pr.stderr or ""):
+                        ok_line("GitHub Pages включён")
+                    else:
+                        info_line(f"Pages: {(pr.stderr or pr.stdout).strip()[:120]}")
+            else:
+                bad_line(f"клон не удался: {r2.stderr.strip()[:200]}")
+    else:
+        bad_line("нет git/gh или нет доступа к GitHub — повтори настройку позже")
+        info_line("команда: py afk.py --setup")
+
+    print(f"\n{C.BOLD}6. Синхронизация{C.R}")
+    if (REPO_DIR / ".git").exists():
+        if watch_status():
+            ok_line(f"уже запущена (pid {watch_status()})")
+        else:
+            good, msg = start_watch_hidden()
+            (ok_line if good else bad_line)(msg)
+    else:
+        bad_line("репозиторий не готов — синхронизация не запущена")
+
+    print(f"\n  {C.BOLD}Готово.{C.R}")
+    if SITE_URL:
+        print(f"  Сайт: {C.CYAN}{SITE_URL}{C.R}")
+    print()
+    return 0 if (REPO_DIR / ".git").exists() else 1
+
+
 def main():
     args = sys.argv[1:]
+    if args and args[0] in ("--setup", "-setup", "setup"):
+        enable_console()
+        sys.exit(setup_mode())
     if args and args[0] in ("--watch", "-watch"):
         enable_console()
         sys.exit(watch_mode())

@@ -28,13 +28,77 @@
       "mtime": "2026-11-12 16:17"
     },
     "C:\\Users\\Zafar\\Documents\\CodeforcesNotes\\CodeforcesNotes\\Бинарка ахах.md": {
-      "hash": "30e63459dfd58301819d95f3ad4aaa0e44836d5d",
+      "hash": "9af19251a6972b3882e164b1684b6b9ff496575b",
       "site": "notes/CodeforcesNotes/CodeforcesNotes/Бинарка ахах.html",
       "title": "Бинарка ахах",
-      "mtime": "2026-11-16 14:08"
+      "mtime": "2026-11-16 14:45"
     }
   },
   "history": [
+    {
+      "time": "2026-11-16T14:45:56",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "be90ccf",
+      "count": 1
+    },
+    {
+      "time": "2026-11-16T14:45:21",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "024b5e4",
+      "count": 1
+    },
+    {
+      "time": "2026-11-16T14:44:18",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "d5d2d8d",
+      "count": 1
+    },
+    {
+      "time": "2026-11-16T14:33:02",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "a51dfb1",
+      "count": 1
+    },
+    {
+      "time": "2026-11-16T14:21:27",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "7365160",
+      "count": 1
+    },
+    {
+      "time": "2026-11-16T14:18:55",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "416bd6b",
+      "count": 1
+    },
+    {
+      "time": "2026-11-16T14:18:20",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "f0065c7",
+      "count": 1
+    },
+    {
+      "time": "2026-11-16T14:14:43",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "4c0ff8c",
+      "count": 1
+    },
     {
       "time": "2026-11-16T14:08:56",
       "files": [
@@ -787,70 +851,10 @@
       ],
       "commit": "27a0579",
       "count": 1
-    },
-    {
-      "time": "2026-11-12T13:20:00",
-      "files": [
-        "CodeforcesNotes/JB_PR_P.md"
-      ],
-      "commit": "3db1c91",
-      "count": 1
-    },
-    {
-      "time": "2026-11-12T12:15:11",
-      "files": [
-        "CodeforcesNotes/JB_PR_P.md"
-      ],
-      "commit": "5dd4d30",
-      "count": 1
-    },
-    {
-      "time": "2026-11-12T12:15:04",
-      "files": [
-        "CodeforcesNotes/JB_PR_P.md"
-      ],
-      "commit": "747f922",
-      "count": 1
-    },
-    {
-      "time": "2026-11-12T10:52:32",
-      "files": [
-        "CodeforcesNotes/JB_PR_P.md"
-      ],
-      "commit": "7e33f78",
-      "count": 1
-    },
-    {
-      "time": "2026-11-12T10:52:26",
-      "files": [
-        "CodeforcesNotes/JB_PR_P.md"
-      ],
-      "commit": "9ded701",
-      "count": 1
-    },
-    {
-      "time": "2026-11-12T10:52:17",
-      "files": [
-        "CodeforcesNotes/JB_PR_P.md"
-      ],
-      "commit": "88e984e",
-      "count": 1
-    },
-    {
-      "time": "2026-11-12T10:37:44",
-      "files": [
-        "CodeforcesNotes/JB_PR_P.md"
-      ],
-      "commit": "4b8d253",
-      "count": 1
-    },
-    {
-      "time": "2026-11-12T10:37:35",
-      "files": [
-        "CodeforcesNotes/JB_PR_P.md"
-      ],
-      "commit": "aafd9e3",
-      "count": 1
     }
-  ]
+  ],
+  "repo_dir": "C:\\Users\\Zafar\\afk-site",
+  "repo_url": "https://github.com/look-afk/afk-notes.git",
+  "site_url": "https://look-afk.github.io/afk-notes/",
+  "gh_link": "https://github.com/look-afk/afk-notes"
 }
