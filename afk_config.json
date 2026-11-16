@@ -1,0 +1,856 @@
+{
+  "folders": [
+    "C:\\Users\\Zafar\\Documents\\ObsidianNotes",
+    "C:\\Users\\Zafar\\Documents\\CodeforcesNotes"
+  ],
+  "state": {
+    "C:\\Users\\Zafar\\Documents\\ObsidianNotes\\Добро пожаловать.md": {
+      "hash": "5a6930c56d0355ccf663a3b99463848952ef9eb2",
+      "site": "notes/ObsidianNotes/Добро пожаловать.html",
+      "title": "Добро пожаловать",
+      "mtime": "2026-11-11 21:54"
+    },
+    "C:\\Users\\Zafar\\Documents\\CodeforcesNotes\\CodeforcesNotes\\JB_PR_P.md": {
+      "hash": "524930c2a84685b39cb61a85c61e46fe9acc5c38",
+      "site": "notes/CodeforcesNotes/CodeforcesNotes/JB_PR_P.html",
+      "title": "JB_PR_P",
+      "mtime": "2026-11-12 14:41"
+    },
+    "C:\\Users\\Zafar\\Documents\\CodeforcesNotes\\CodeforcesNotes\\Pasted image 20261112101336.png": {
+      "hash": "4c1f1c0bfe77a6e27388586e19c710909af584c5",
+      "site": "notes/CodeforcesNotes/CodeforcesNotes/Pasted image 20261112101336.png",
+      "mtime": ""
+    },
+    "C:\\Users\\Zafar\\Documents\\CodeforcesNotes\\CodeforcesNotes\\Задачи.md": {
+      "hash": "708477ce3630ec7e3808b4356754e0f74f4a9306",
+      "site": "notes/CodeforcesNotes/CodeforcesNotes/Задачи.html",
+      "title": "Задачи",
+      "mtime": "2026-11-12 16:17"
+    },
+    "C:\\Users\\Zafar\\Documents\\CodeforcesNotes\\CodeforcesNotes\\Бинарка ахах.md": {
+      "hash": "30e63459dfd58301819d95f3ad4aaa0e44836d5d",
+      "site": "notes/CodeforcesNotes/CodeforcesNotes/Бинарка ахах.html",
+      "title": "Бинарка ахах",
+      "mtime": "2026-11-16 14:08"
+    }
+  },
+  "history": [
+    {
+      "time": "2026-11-16T14:08:56",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "37cccb2",
+      "count": 1
+    },
+    {
+      "time": "2026-11-16T13:44:13",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "8833df9",
+      "count": 1
+    },
+    {
+      "time": "2026-11-16T13:00:23",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "cf23b2e",
+      "count": 1
+    },
+    {
+      "time": "2026-11-16T11:56:43",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "7a074f1",
+      "count": 1
+    },
+    {
+      "time": "2026-11-16T11:45:49",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "ac798bb",
+      "count": 1
+    },
+    {
+      "time": "2026-11-16T11:35:19",
+      "files": [
+        "CodeforcesNotes/Бинарка ахах.md"
+      ],
+      "commit": "3b19b41",
+      "count": 1
+    },
+    {
+      "time": "2026-11-13T16:50:39",
+      "files": [
+        "Добро пожаловать.md",
+        "CodeforcesNotes/JB_PR_P.md",
+        "CodeforcesNotes/Задачи.md"
+      ],
+      "commit": "821aa39",
+      "count": 3
+    },
+    {
+      "time": "2026-11-13T16:43:40",
+      "files": [
+        "Добро пожаловать.md",
+        "CodeforcesNotes/JB_PR_P.md",
+        "CodeforcesNotes/Задачи.md"
+      ],
+      "commit": "577e3fb",
+      "count": 3
+    },
+    {
+      "time": "2026-11-13T16:37:41",
+      "files": [
+        "Добро пожаловать.md",
+        "CodeforcesNotes/JB_PR_P.md",
+        "CodeforcesNotes/Задачи.md"
+      ],
+      "commit": "8a79102",
+      "count": 3
+    },
+    {
+      "time": "2026-11-13T16:07:03",
+      "files": [
+        "Добро пожаловать.md",
+        "CodeforcesNotes/JB_PR_P.md",
+        "CodeforcesNotes/Задачи.md"
+      ],
+      "commit": "5b8060f",
+      "count": 3
+    },
+    {
+      "time": "2026-11-13T14:01:56",
+      "files": [
+        "Добро пожаловать.md",
+        "CodeforcesNotes/JB_PR_P.md",
+        "CodeforcesNotes/Задачи.md"
+      ],
+      "commit": "aaf328f",
+      "count": 3
+    },
+    {
+      "time": "2026-11-13T13:11:02",
+      "files": [
+        "Добро пожаловать.md",
+        "CodeforcesNotes/JB_PR_P.md",
+        "CodeforcesNotes/Задачи.md"
+      ],
+      "commit": "dd60f8c",
+      "count": 3
+    },
+    {
+      "time": "2026-11-13T13:00:02",
+      "files": [
+        "Добро пожаловать.md",
+        "CodeforcesNotes/JB_PR_P.md",
+        "CodeforcesNotes/Задачи.md"
+      ],
+      "commit": "160f8e0",
+      "count": 3
+    },
+    {
+      "time": "2026-11-13T11:19:59",
+      "files": [
+        "Добро пожаловать.md",
+        "CodeforcesNotes/JB_PR_P.md",
+        "CodeforcesNotes/Задачи.md"
+      ],
+      "commit": "c71d42e",
+      "count": 3
+    },
+    {
+      "time": "2026-11-12T16:17:31",
+      "files": [
+        "CodeforcesNotes/Задачи.md"
+      ],
+      "commit": "1d5603f",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T15:23:05",
+      "files": [
+        "CodeforcesNotes/Задачи.md"
+      ],
+      "commit": "e34797d",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T15:00:22",
+      "files": [
+        "CodeforcesNotes/Задачи.md"
+      ],
+      "commit": "df5c0ab",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T14:56:24",
+      "files": [
+        "CodeforcesNotes/Задачи.md"
+      ],
+      "commit": "7413857",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T14:45:51",
+      "files": [
+        "notes/ObsidianNotes/__debounce_test.html"
+      ],
+      "commit": "819cecd",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T14:44:24",
+      "files": [
+        "__debounce_test.md"
+      ],
+      "commit": "a954317",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T14:42:13",
+      "files": [
+        "__debounce_test.md"
+      ],
+      "commit": "0317106",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T14:41:20",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "efa82f9",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T14:40:56",
+      "files": [
+        "Добро пожаловать.md",
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "6157850",
+      "count": 2
+    },
+    {
+      "time": "2026-11-12T13:45:05",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "b7c60ca",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:44:57",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "8077028",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:44:27",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "b551bfd",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:44:19",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "e04338e",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:44:09",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "d714243",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:44:02",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "04e1ff0",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:43:55",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "808f4e8",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:40:19",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "124fa6d",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:40:12",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "3efa47a",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:40:05",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "2db5f7d",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:39:59",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "3f8d19e",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:39:49",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "5b7516f",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:39:43",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "365acd9",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:39:35",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "5caf9c3",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:39:29",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "1170b18",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:39:22",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "be9d98c",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:39:16",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "9547655",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:39:10",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "d57146b",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:37:03",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "31a15dd",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:36:56",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "b2fec03",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:36:38",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "33ce2b1",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:36:00",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "69e9a0f",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:35:53",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "82f77e3",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:35:47",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "ee02a37",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:35:17",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "51486c0",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:35:10",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "1b90349",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:34:56",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "95eb837",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:34:50",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "32b4727",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:34:44",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "da90ef4",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:34:34",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "3f32876",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:34:27",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "8da6767",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:34:14",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "00482d0",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:33:32",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "f603fec",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:31:59",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "af288db",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:31:52",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "1234909",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:31:46",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "7ccdd7b",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:31:39",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "77b202e",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:31:32",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "f6702f9",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:31:25",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "3e8d3b5",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:31:18",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "e404b0d",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:31:11",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "21fff56",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:31:04",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "3d55251",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:30:58",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "1e898c3",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:30:52",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "47108ff",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:30:45",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "36323cf",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:30:37",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "a52a795",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:30:30",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "40542cb",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:30:23",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "9121208",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:30:16",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "c7f7ff7",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:30:09",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "017c9f0",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:30:03",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "d21ec6f",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:29:56",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "4e50b05",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:29:36",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "b8555ac",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:29:30",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "ad1b503",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:29:24",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "bfc0c60",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:29:12",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "8d81e1c",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:29:05",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "39e8be3",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:28:55",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "aa0c502",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:28:48",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "948924c",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:21:10",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "583e167",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:21:03",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "d2a6848",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:20:57",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "7f110fd",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:20:50",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "6d0ab69",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:20:43",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "b29d572",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:20:36",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "ce600df",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:20:30",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "9874bed",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:20:22",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "a8af742",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:20:16",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "6b44ada",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:20:09",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "27a0579",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T13:20:00",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "3db1c91",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T12:15:11",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "5dd4d30",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T12:15:04",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "747f922",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T10:52:32",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "7e33f78",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T10:52:26",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "9ded701",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T10:52:17",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "88e984e",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T10:37:44",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "4b8d253",
+      "count": 1
+    },
+    {
+      "time": "2026-11-12T10:37:35",
+      "files": [
+        "CodeforcesNotes/JB_PR_P.md"
+      ],
+      "commit": "aafd9e3",
+      "count": 1
+    }
+  ]
+}
