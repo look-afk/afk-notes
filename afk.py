@@ -19,10 +19,13 @@ except ImportError:
     msvcrt = None
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-CONFIG_PATH = SCRIPT_DIR / "afk_config.json"
-WATCH_LOG = SCRIPT_DIR / "afk_watch.log"
-WATCH_LOCK = SCRIPT_DIR / "afk_watch.lock"
-WATCH_PID = SCRIPT_DIR / "afk_watch.pid"
+CONFIG_PATH = (Path.home() / "afk_config.json"
+               if (Path.home() / "afk_config.json").exists()
+               else SCRIPT_DIR / "afk_config.json")
+STATE_DIR = CONFIG_PATH.parent
+WATCH_LOG = STATE_DIR / "afk_watch.log"
+WATCH_LOCK = STATE_DIR / "afk_watch.lock"
+WATCH_PID = STATE_DIR / "afk_watch.pid"
 REPO_DIR = SCRIPT_DIR / "afk-site"  # переопределяется init_runtime() из конфига
 REPO_URL = ""
 SITE_URL = ""
