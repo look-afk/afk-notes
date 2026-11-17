@@ -168,6 +168,32 @@ def url_for(site_path):
     return SITE_URL + "/".join(urllib.parse.quote(seg) for seg in p.split("/"))
 
 
+PAGE_FEATS = set()
+
+CALLOUT_ICON = {
+    "note": "📝", "abstract": "📋", "summary": "📋", "tldr": "📋",
+    "info": "ℹ️", "todo": "☑️",
+    "tip": "💡", "hint": "💡", "important": "💡",
+    "success": "✅", "check": "✅", "done": "✅",
+    "question": "❓", "help": "❓", "faq": "❓",
+    "warning": "⚠️", "caution": "⚠️", "attention": "⚠️",
+    "failure": "❌", "fail": "❌", "missing": "❌",
+    "danger": "💥", "error": "💥", "bug": "🐞",
+    "example": "📌", "quote": "❝", "cite": "❝",
+}
+CALLOUT_COLOR = {
+    "note": "#3b82f6", "abstract": "#3b82f6", "summary": "#3b82f6",
+    "tldr": "#3b82f6", "info": "#3b82f6", "todo": "#3b82f6",
+    "tip": "#06b6d4", "hint": "#06b6d4", "important": "#06b6d4",
+    "success": "#22c55e", "check": "#22c55e", "done": "#22c55e",
+    "question": "#a855f7", "help": "#a855f7", "faq": "#a855f7",
+    "warning": "#eab308", "caution": "#eab308", "attention": "#eab308",
+    "failure": "#ef4444", "fail": "#ef4444", "missing": "#ef4444",
+    "danger": "#ef4444", "error": "#ef4444", "bug": "#ef4444",
+    "example": "#a855f7", "quote": "#71717a", "cite": "#71717a",
+}
+
+
 def inline_md(text):
     protected = []
 
@@ -175,6 +201,11 @@ def inline_md(text):
         protected.append(html)
         return f"\x00{len(protected) - 1}\x00"
 
+    def keep_math(m):
+        PAGE_FEATS.add("katex")
+        return keep(f'<span class="math-inline">\\({escape_html(m.group(1))}\\)</span>')
+
+    text = re.sub(r"(?<!\\)\$(?!\$|\s)([^\$\n]+?)(?<!\s)\$", keep_math, text)
     text = re.sub(r"\\([\\`*_[\]{}()#+\-.!|<>~^&=+])",
                   lambda m: keep(escape_html(m.group(1))), text)
     html_re = (
@@ -191,6 +222,11 @@ def inline_md(text):
                   flags=re.S)
 
     text = escape_html(text)
+
+    text = re.sub(r"\[\^([^\]\s]+)\]",
+                  lambda m: keep(
+                      f'<sup class="fnref"><a href="#fn-{escape_html(m.group(1))}">'
+                      f"{escape_html(m.group(1))}</a></sup>"), text)
 
     text = re.sub(r"\*\*\*([^\n]+?)\*\*\*", r"<strong><em>\1</em></strong>", text)
     text = re.sub(r"\*\*([^\n]+?)\*\*", r"<strong>\1</strong>", text)
@@ -219,10 +255,13 @@ def inline_md(text):
                   img, text)
 
     def wiki_img(m):
-        name = Path(m.group(1).split("|")[0]).name.lower()
+        parts = m.group(1).split("|")
+        name = Path(parts[0]).name.lower()
+        w = parts[1].strip() if len(parts) > 1 else ""
         real = ASSETS.get(name)
         if real:
-            return keep(f'<img src="{url_for(real)}" alt="{name}">')
+            style = f' style="width:{escape_html(w)}px"' if w.isdigit() else ""
+            return keep(f'<img src="{url_for(real)}" alt="{name}"{style}>')
         return keep(m.group(0))
 
     text = re.sub(r"!\[\[([^\]]+)\]\]", wiki_img, text)
@@ -243,9 +282,19 @@ def inline_md(text):
         alias = body.split("|", 1)
         target = alias[0].strip()
         label = alias[1].strip() if len(alias) > 1 else target
-        dest = WIKI.get(Path(target).stem.lower())
-        if dest:
-            return keep(f'<a href="{url_for(dest)}">{escape_html(label)}</a>')
+        page, _, frag = target.partition("#")
+        frag = frag.strip()
+        anchor = ""
+        if frag and not frag.startswith("^"):
+            anchor = "#" + slugify(frag)
+        if page:
+            dest = WIKI.get(Path(page).stem.lower())
+            if dest:
+                return keep(f'<a href="{url_for(dest)}{anchor}">'
+                            f"{escape_html(label)}</a>")
+            return keep(f'<span class="wl">{escape_html(label)}</span>')
+        if frag and not frag.startswith("^"):
+            return keep(f'<a href="{anchor}">{escape_html(label)}</a>')
         return keep(f'<span class="wl">{escape_html(label)}</span>')
 
     text = re.sub(r"\[\[([^\]]+)\]\]", wiki, text)
@@ -255,6 +304,9 @@ def inline_md(text):
         return keep(f'<a href="{url}" target="_blank" rel="noopener">{url}</a>')
 
     text = re.sub(r"(?<![\w\"=/])(https?://[^\s<>\"')\]]+)", bare_url, text)
+
+    text = re.sub(r"(?<![\w/])#([^\W\d][\w-]*)",
+                  r'<span class="hashtag">#\1</span>', text)
 
     for i in range(len(protected) - 1, -1, -1):
         text = text.replace(f"\x00{i}\x00", protected[i])
@@ -304,17 +356,48 @@ def render_list_block(block):
         else:
             parts.append(f"<li>{inner}</li>")
     tag = "ol" if ordered else "ul"
-    return f"<{tag}>{''.join(parts)}</{tag}>"
+    start_attr = ""
+    if ordered:
+        num = re.match(r"^\s*(\d+)\.", block[0])
+        if num and int(num.group(1)) != 1:
+            start_attr = f' start="{int(num.group(1))}"'
+    return f"<{tag}{start_attr}>{''.join(parts)}</{tag}>"
 
 
 def md_to_html(md):
-    md = md.lstrip("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
+    md = md.lstrip("﻿").replace("\r\n", "\n").replace("\r", "\n")
+    props_html = ""
     if md.startswith("---\n"):
         end = md.find("\n---", 4)
         if end != -1:
+            fm = md[4:end]
             md = md[end + 4:].lstrip("\n")
+            rows = []
+            for ln in fm.split("\n"):
+                fmm = re.match(r"^([A-Za-zА-Яа-яЁё][\w -]*?)\s*:\s*(.*)$", ln)
+                if fmm:
+                    k = fmm.group(1)
+                    v = fmm.group(2).strip().strip("\"'")
+                    rows.append(
+                        f'<div class="prop"><span class="prop-k">{escape_html(k)}</span>'
+                        f'<span class="prop-v">{escape_html(v)}</span></div>'
+                    )
+            if rows:
+                props_html = f'<div class="props">{"".join(rows)}</div>'
+    fence_parts = re.split(r"(^```.*?^```)", md, flags=re.S | re.M)
+    for j in range(0, len(fence_parts), 2):
+        fence_parts[j] = re.sub(r"%%.*?%%", "", fence_parts[j], flags=re.S)
+    md = "".join(fence_parts)
+    math_blocks = []
+
+    def _math_block(m):
+        math_blocks.append(m.group(1).strip())
+        return f"\n\x03B{len(math_blocks) - 1}\x03\n"
+
+    md = re.sub(r"\$\$(.+?)\$\$", _math_block, md, flags=re.S)
     lines = md.split("\n")
     out = []
+    fn_defs = []
     i = 0
     n = len(lines)
 
@@ -325,12 +408,31 @@ def md_to_html(md):
             or ln.startswith("```")
             or re.match(r"^\s*([-*+]|\d+\.)\s+", ln)
             or re.match(r"^(-{3,}|\*{3,}|_{3,})\s*$", ln)
+            or re.match(r"^\x03B\d+\x03$", ln)
+            or re.match(r"^\[\^[^\]\s]+\]:", ln)
             or ("|" in ln and "-" in nxt
                 and re.match(r"^\s*\|?[\s:|-]+\|?\s*$", nxt))
         )
 
+    def render_footnotes():
+        if not fn_defs:
+            return ""
+        items = "".join(
+            f'<p class="fn" id="fn-{escape_html(k)}"><b>[{escape_html(k)}]</b> '
+            f"{inline_md(v)}</p>"
+            for k, v in fn_defs
+        )
+        return f'<div class="footnotes"><hr>{items}</div>'
+
     while i < n:
         line = lines[i]
+        mb = re.match(r"^\x03B(\d+)\x03$", line.strip())
+        if mb:
+            PAGE_FEATS.add("katex")
+            out.append(f'<div class="math-block">\\['
+                       f"{escape_html(math_blocks[int(mb.group(1))])}\\]</div>")
+            i += 1
+            continue
         if line.startswith("```"):
             lang = line[3:].strip()
             i += 1
@@ -339,8 +441,13 @@ def md_to_html(md):
                 buf.append(lines[i])
                 i += 1
             i += 1
+            code = escape_html(chr(10).join(buf))
+            if lang == "mermaid":
+                PAGE_FEATS.add("mermaid")
+                out.append(f'<div class="mermaid">{code}</div>')
+                continue
             cls = f' class="lang-{escape_html(lang)}"' if lang else ""
-            out.append(f"<pre><code{cls}>{escape_html(chr(10).join(buf))}</code></pre>")
+            out.append(f"<pre><code{cls}>{code}</code></pre>")
             continue
         m = re.match(r"^(#{1,6})\s+(.*)$", line)
         if m:
@@ -353,11 +460,43 @@ def md_to_html(md):
             out.append("<hr>")
             i += 1
             continue
+        mfn = re.match(r"^\[\^([^\]\s]+)\]:\s*(.*)$", line)
+        if mfn:
+            fn_defs.append((mfn.group(1), mfn.group(2)))
+            i += 1
+            continue
         if line.startswith(">"):
             buf = []
             while i < n and lines[i].startswith(">"):
                 buf.append(re.sub(r"^>\s?", "", lines[i]))
                 i += 1
+            cm = re.match(r"^\[!([A-Za-z0-9_-]+)\]([-+]?)\s*(.*)$", buf[0])
+            if cm:
+                ctype = cm.group(1).lower()
+                marker = cm.group(2)
+                ctitle = cm.group(3).strip() or ctype.capitalize()
+                icon = CALLOUT_ICON.get(ctype, "📝")
+                color = CALLOUT_COLOR.get(ctype, "#71717a")
+                rest = buf[1:]
+                inner = (md_to_html("\n".join(rest))
+                         if any(s.strip() for s in rest) else "")
+                attrs = (f'data-type="{escape_html(ctype)}" style="--c:{color}"')
+                title_html = (f'<span class="callout-ic">{icon}</span>'
+                              f'<span class="callout-name">{escape_html(ctitle)}</span>')
+                if marker:
+                    open_attr = " open" if marker == "+" else ""
+                    out.append(
+                        f'<details class="callout"{open_attr} {attrs}>'
+                        f'<summary class="callout-title">{title_html}</summary>'
+                        f'<div class="callout-content">{inner}</div></details>'
+                    )
+                else:
+                    out.append(
+                        f'<div class="callout" {attrs}>'
+                        f'<div class="callout-title">{title_html}</div>'
+                        f'<div class="callout-content">{inner}</div></div>'
+                    )
+                continue
             out.append("<blockquote>" + md_to_html("\n".join(buf)) + "</blockquote>")
             continue
         if (
@@ -370,15 +509,34 @@ def md_to_html(md):
                 row = row.strip().strip("|")
                 return [c.strip() for c in row.split("|")]
 
+            def cell_align(c):
+                c = c.strip()
+                if len(c) >= 2 and c.startswith(":") and c.endswith(":"):
+                    return "center"
+                if c.endswith(":"):
+                    return "right"
+                if c.startswith(":"):
+                    return "left"
+                return ""
+
             header = split_row(line)
+            aligns = [cell_align(c) for c in split_row(lines[i + 1])]
             i += 2
             rows = []
             while i < n and "|" in lines[i] and lines[i].strip():
                 rows.append(split_row(lines[i]))
                 i += 1
-            thead = "".join(f"<th>{inline_md(h)}</th>" for h in header)
+
+            def cell_html(tag, txt, k):
+                a = aligns[k] if k < len(aligns) else ""
+                style = f' style="text-align:{a}"' if a else ""
+                return f"<{tag}{style}>{inline_md(txt)}</{tag}>"
+
+            thead = "".join(cell_html("th", h, k) for k, h in enumerate(header))
             tbody = "".join(
-                "<tr>" + "".join(f"<td>{inline_md(c)}</td>" for c in r) + "</tr>" for r in rows
+                "<tr>" + "".join(cell_html("td", c, k) for k, c in enumerate(r))
+                + "</tr>"
+                for r in rows
             )
             out.append(f"<table><thead><tr>{thead}</tr></thead><tbody>{tbody}</tbody></table>")
             continue
@@ -437,6 +595,11 @@ def md_to_html(md):
             buf.append(lines[i])
             i += 1
         out.append("<p>" + "<br>".join(inline_md(b) for b in buf) + "</p>")
+    if props_html:
+        out.insert(0, props_html)
+    foot = render_footnotes()
+    if foot:
+        out.append(foot)
     return "\n".join(out)
 
 
@@ -852,6 +1015,42 @@ h1, h2, h3, h4, h5, h6 { line-height: 1.3; color: #fff;
 .stat, .count, .card-time, .meta, .np-date, .nav-count, .stats {
   font-variant-numeric: tabular-nums; }
 
+.content .hashtag { color: #818cf8; }
+.content .callout { margin: 16px 0; border: 1px solid var(--border2);
+  border-left: 3px solid var(--c, #71717a); border-radius: 8px;
+  background: color-mix(in srgb, var(--c, #71717a) 8%, transparent); }
+.content .callout-title { display: flex; align-items: center; gap: 8px;
+  margin: 0; padding: 10px 14px; font-weight: 600; font-size: 0.875rem;
+  color: var(--c, #d4d4d8); }
+.content .callout-ic { line-height: 1; }
+.content .callout-content { padding: 0 14px 12px; color: #d4d4d8; }
+.content .callout-content > :first-child { margin-top: 0; }
+.content .callout-content > :last-child { margin-bottom: 0; }
+.content details.callout > summary { cursor: pointer; list-style: none; }
+.content details.callout > summary::-webkit-details-marker { display: none; }
+.content details.callout > summary::after { content: "\\203A"; margin-left: auto;
+  color: var(--dim); font-weight: 400; transition: transform .15s; }
+.content details.callout[open] > summary::after { transform: rotate(90deg); }
+.content .props { border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 0; margin: 4px 0 18px; background: var(--panel2); }
+.content .prop { display: flex; gap: 12px; padding: 4px 14px;
+  font-size: 0.8125rem; }
+.content .prop-k { color: var(--dim); min-width: 110px; flex: none; }
+.content .prop-v { color: #d4d4d8; word-break: break-word; }
+.content .footnotes { border-top: 1px solid var(--border2);
+  margin-top: 26px; padding-top: 10px; }
+.content .footnotes .fn { font-size: 0.8125rem; color: var(--muted);
+  margin: 8px 0; }
+.content .footnotes .fn b { color: var(--dim); font-weight: 500;
+  font-variant-numeric: tabular-nums; }
+.content .fnref a { color: #818cf8; text-decoration: none; }
+.content .math-block { margin: 18px 0; text-align: center; overflow-x: auto; }
+.content .math-inline { font-family: var(--font-mono); }
+.content .mermaid { margin: 18px 0; text-align: center;
+  background: var(--panel2); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px; font-family: var(--font-mono);
+  font-size: 0.8125rem; white-space: pre-wrap; }
+
 @media (max-width: 820px) {
   .app { grid-template-columns: 1fr; }
   .sidebar { position: static; height: auto; border-right: none;
@@ -884,6 +1083,28 @@ def page_html(title, body, site_path, folder="", mtime="", folders=None):
     date = f'<span class="np-date">{escape_html(mtime)}</span>' if mtime else ""
     folders = folders or []
     total = sum(c for _, c in folders)
+    extra_head = ""
+    extra_js = ""
+    if "katex" in PAGE_FEATS:
+        extra_head = ('<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/'
+                      'katex@0.16/dist/katex.min.css" crossorigin="anonymous">')
+        extra_js += (
+            '<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/'
+            'katex.min.js" crossorigin="anonymous"></script>\n'
+            '<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16/dist/'
+            'contrib/auto-render.min.js" crossorigin="anonymous"></script>\n'
+            '<script>window.addEventListener("load",function(){var el='
+            'document.querySelector(".content");'
+            'if(el&&window.renderMathInElement)renderMathInElement(el,'
+            '{delimiters:[{left:"\\\\[",right:"\\\\]",display:!0},'
+            '{left:"\\\\(",right:"\\\\)",display:!1}]});});</script>'
+        )
+    if "mermaid" in PAGE_FEATS:
+        extra_js += (
+            '<script type="module">import mermaid from "https://cdn.jsdelivr.net/'
+            'npm/mermaid@11/dist/mermaid.esm.min.mjs";'
+            'mermaid.initialize({startOnLoad:!0,theme:"dark"});</script>'
+        )
     return f"""<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -892,6 +1113,7 @@ def page_html(title, body, site_path, folder="", mtime="", folders=None):
 <title>{escape_html(title)}</title>
 {FONT_LINK}
 <link rel="icon" href="{back}favicon.svg" type="image/svg+xml">
+{extra_head}
 <style>{PAGE_CSS}</style>
 </head>
 <body>
@@ -910,6 +1132,7 @@ def page_html(title, body, site_path, folder="", mtime="", folders=None):
 </main>
 </div>
 </div>
+{extra_js}
 <script>{SITE_JS}</script>
 </body>
 </html>
@@ -1136,13 +1359,14 @@ def publish(cfg, quiet=False, dry_run=False):
         if not dry_run:
             dest.parent.mkdir(parents=True, exist_ok=True)
             if ext == ".md":
-                text = path.read_text(encoding="utf-8", errors="replace").lstrip("\ufeff")
+                text = path.read_text(encoding="utf-8", errors="replace").lstrip("﻿")
                 title = path.stem
                 for ln in text.split("\n"):
                     mm = re.match(r"^#\s+(.+)$", ln.strip())
                     if mm:
                         title = mm.group(1).strip()
                         break
+                PAGE_FEATS.clear()
                 body = md_to_html(text)
                 mtime = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
                 dest.write_text(page_html(title, body, str(site).replace("\\", "/"),
