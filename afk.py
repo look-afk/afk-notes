@@ -169,35 +169,70 @@ def url_for(site_path):
 
 
 def inline_md(text):
-    codes = []
+    protected = []
+
+    def keep(html):
+        protected.append(html)
+        return f"\x00{len(protected) - 1}\x00"
+
+    text = re.sub(r"\\([\\`*_[\]{}()#+\-.!|<>~^&=+])",
+                  lambda m: keep(escape_html(m.group(1))), text)
+    html_re = (
+        r"</?[A-Za-z][A-Za-z0-9-]*"
+        r"(?:\s+[A-Za-z-]+(?:\s*=\s*(?:[^\s\"'=<>`]+|'[^']*'|\"[^\"]*\"))?)*"
+        r"\s*/?>|<!--.*?-->"
+    )
+    text = re.sub(html_re, lambda m: keep(m.group(0)), text)
 
     def keep_code(m):
-        codes.append(f"<code>{escape_html(m.group(1))}</code>")
-        return f"\x00{len(codes) - 1}\x00"
+        return keep(f"<code>{escape_html(m.group(2))}</code>")
 
-    text = re.sub(r"`([^`\n]+)`", keep_code, text)
+    text = re.sub(r"(?<!`)(`+)(?!`)(.+?)(?<!`)\1(?!`)", keep_code, text,
+                  flags=re.S)
+
     text = escape_html(text)
 
+    text = re.sub(r"\*\*\*([^\n]+?)\*\*\*", r"<strong><em>\1</em></strong>", text)
+    text = re.sub(r"\*\*([^\n]+?)\*\*", r"<strong>\1</strong>", text)
+    text = re.sub(r"___([^\n]+?)___", r"<strong><em>\1</em></strong>", text)
+    text = re.sub(r"__([^\n]+?)__", r"<strong>\1</strong>", text)
+    text = re.sub(r"(?<!\*)\*([^*\n<>]+?)\*(?!\*)", r"<em>\1</em>", text)
+    text = re.sub(r"(?<![\w*])_([^_\n<>]+)_(?![\w*])", r"<em>\1</em>", text)
+    text = re.sub(r"~~([^~\n]+)~~", r"<del>\1</del>", text)
+    text = re.sub(r"==([^=\n]+)==", r"<mark>\1</mark>", text)
+
     def img(m):
-        alt, src = m.group(1), m.group(2)
+        alt, src, title = m.group(1), m.group(2), m.group(3)
+        if src.startswith("<") and src.endswith(">"):
+            src = src[1:-1]
         key = src.lstrip("./").lower()
         real = ASSETS.get(key) or ASSETS.get(Path(src).name.lower())
         href = url_for(real) if real else src
-        return f'<img src="{href}" alt="{alt}">'
+        t = f' title="{title}"' if title else ""
+        return keep(f'<img src="{href}" alt="{alt}"{t}>')
 
-    text = re.sub(r"!\[([^\]]*)\]\(([^)\s]+)\)", img, text)
+    text = re.sub(r"!\[([^\]]*)\]\(\s*([^)\s]+)(?:\s+&quot;(.*?)&quot;)?\s*\)",
+                  img, text)
 
     def wiki_img(m):
         name = Path(m.group(1).split("|")[0]).name.lower()
         real = ASSETS.get(name)
-        return f'<img src="{url_for(real)}" alt="{name}">' if real else escape_html(m.group(0))
+        if real:
+            return keep(f'<img src="{url_for(real)}" alt="{name}">')
+        return keep(m.group(0))
 
     text = re.sub(r"!\[\[([^\]]+)\]\]", wiki_img, text)
 
     def link(m):
-        return f'<a href="{m.group(2)}" target="_blank" rel="noopener">{m.group(1)}</a>'
+        href, title = m.group(2), m.group(3)
+        if href.startswith("<") and href.endswith(">"):
+            href = href[1:-1]
+        t = f' title="{title}"' if title else ""
+        return keep(f'<a href="{href}"{t} target="_blank" '
+                    f'rel="noopener">{m.group(1)}</a>')
 
-    text = re.sub(r"\[([^\]]+)\]\(([^)\s]+)\)", link, text)
+    text = re.sub(r"\[([^\]]+)\]\(\s*([^)\s]+)(?:\s+&quot;(.*?)&quot;)?\s*\)",
+                  link, text)
 
     def wiki(m):
         body = m.group(1)
@@ -206,20 +241,66 @@ def inline_md(text):
         label = alias[1].strip() if len(alias) > 1 else target
         dest = WIKI.get(Path(target).stem.lower())
         if dest:
-            return f'<a href="{url_for(dest)}">{escape_html(label)}</a>'
-        return f'<span class="wl">{escape_html(label)}</span>'
+            return keep(f'<a href="{url_for(dest)}">{escape_html(label)}</a>')
+        return keep(f'<span class="wl">{escape_html(label)}</span>')
 
     text = re.sub(r"\[\[([^\]]+)\]\]", wiki, text)
-    text = re.sub(r"\*\*([^*\n]+)\*\*", r"<strong>\1</strong>", text)
-    text = re.sub(r"__([^_\n]+)__", r"<strong>\1</strong>", text)
-    text = re.sub(r"\*([^*\n]+)\*", r"<em>\1</em>", text)
-    text = re.sub(r"(?<![\w*])_([^_\n]+)_(?![\w*])", r"<em>\1</em>", text)
-    text = re.sub(r"~~([^~\n]+)~~", r"<del>\1</del>", text)
-    text = re.sub(r"==([^=\n]+)==", r"<mark>\1</mark>", text)
 
-    for i, code in enumerate(codes):
-        text = text.replace(f"\x00{i}\x00", code)
+    def bare_url(m):
+        url = re.sub(r"[.,;:!?]+$", "", m.group(1))
+        return keep(f'<a href="{url}" target="_blank" rel="noopener">{url}</a>')
+
+    text = re.sub(r"(?<![\w\"=/])(https?://[^\s<>\"')\]]+)", bare_url, text)
+
+    for i in range(len(protected) - 1, -1, -1):
+        text = text.replace(f"\x00{i}\x00", protected[i])
     return text
+
+
+LIST_ITEM_RE = re.compile(r"^(\s*)([-*+]|\d+\.)\s+(.*)$")
+
+
+def render_list_block(block):
+    first = LIST_ITEM_RE.match(block[0])
+    base = len(first.group(1))
+    ordered = first.group(2).endswith(".")
+    items = []
+    cur = None
+    for ln in block:
+        if not ln.strip():
+            continue
+        mm = LIST_ITEM_RE.match(ln)
+        if mm and len(mm.group(1)) <= base:
+            cur = {"text": [mm.group(3)], "sub": []}
+            items.append(cur)
+        elif mm:
+            if cur is None:
+                cur = {"text": [""], "sub": []}
+                items.append(cur)
+            cur["sub"].append(ln)
+        elif cur is not None:
+            cur["text"].append(ln.strip())
+    parts = []
+    for it in items:
+        t0 = it["text"][0]
+        tm = re.match(r"^\[([ xX])\]\s+(.*)$", t0)
+        task = bool(tm)
+        inner = inline_md(tm.group(2) if task else t0)
+        for extra in it["text"][1:]:
+            if extra.strip():
+                inner += "<br>" + inline_md(extra)
+        if it["sub"]:
+            inner += render_list_block(it["sub"])
+        if task:
+            checked = " checked" if tm.group(1).lower() == "x" else ""
+            parts.append(
+                f'<li class="task"><input type="checkbox" disabled{checked}>'
+                f"{inner}</li>"
+            )
+        else:
+            parts.append(f"<li>{inner}</li>")
+    tag = "ol" if ordered else "ul"
+    return f"<{tag}>{''.join(parts)}</{tag}>"
 
 
 def md_to_html(md):
@@ -233,13 +314,15 @@ def md_to_html(md):
     i = 0
     n = len(lines)
 
-    def is_block_start(ln):
+    def is_block_start(ln, nxt=""):
         return (
             ln.startswith("#")
             or ln.startswith(">")
             or ln.startswith("```")
             or re.match(r"^\s*([-*+]|\d+\.)\s+", ln)
             or re.match(r"^(-{3,}|\*{3,}|_{3,})\s*$", ln)
+            or ("|" in ln and "-" in nxt
+                and re.match(r"^\s*\|?[\s:|-]+\|?\s*$", nxt))
         )
 
     while i < n:
@@ -258,7 +341,8 @@ def md_to_html(md):
         m = re.match(r"^(#{1,6})\s+(.*)$", line)
         if m:
             level = len(m.group(1))
-            out.append(f"<h{level}>{inline_md(m.group(2).rstrip(' #'))}</h{level}>")
+            txt = m.group(2).rstrip(" #")
+            out.append(f'<h{level} id="{slugify(txt)}">{inline_md(txt)}</h{level}>')
             i += 1
             continue
         if re.match(r"^(-{3,}|\*{3,}|_{3,})\s*$", line):
@@ -268,7 +352,7 @@ def md_to_html(md):
         if line.startswith(">"):
             buf = []
             while i < n and lines[i].startswith(">"):
-                buf.append(lines[i].lstrip(">").lstrip(" "))
+                buf.append(re.sub(r"^>\s?", "", lines[i]))
                 i += 1
             out.append("<blockquote>" + md_to_html("\n".join(buf)) + "</blockquote>")
             continue
@@ -294,26 +378,58 @@ def md_to_html(md):
             )
             out.append(f"<table><thead><tr>{thead}</tr></thead><tbody>{tbody}</tbody></table>")
             continue
-        m = re.match(r"^(\s*)([-*+]|\d+\.)\s+(.*)$", line)
+        m = LIST_ITEM_RE.match(line)
         if m:
-            ordered = m.group(2).endswith(".")
-            items = []
+            base = len(m.group(1))
+            first_ordered = m.group(2).endswith(".")
+            block = [line]
+            i += 1
             while i < n:
-                mm = re.match(r"^(\s*)([-*+]|\d+\.)\s+(.*)$", lines[i])
-                if not mm:
+                ln = lines[i]
+                if not ln.strip():
+                    j = i + 1
+                    if j < n:
+                        nm = LIST_ITEM_RE.match(lines[j])
+                        ind_j = len(lines[j]) - len(lines[j].lstrip())
+                        if (nm and len(nm.group(1)) >= base) or ind_j >= base + 2:
+                            block.append(ln)
+                            i += 1
+                            continue
                     break
-                items.append(mm.group(3))
+                mm = LIST_ITEM_RE.match(ln)
+                if mm:
+                    if len(mm.group(1)) < base:
+                        break
+                    if (len(mm.group(1)) == base
+                            and mm.group(2).endswith(".") != first_ordered):
+                        break
+                    block.append(ln)
+                    i += 1
+                    continue
+                if len(ln) - len(ln.lstrip()) >= base + 2:
+                    block.append(ln)
+                    i += 1
+                    continue
+                break
+            out.append(render_list_block(block))
+            continue
+        if re.match(r"^ {4,}\S", line):
+            buf = []
+            while i < n and (not lines[i].strip() or re.match(r"^ {4,}", lines[i])):
+                buf.append(lines[i])
                 i += 1
-            tag = "ol" if ordered else "ul"
-            lis = "".join(f"<li>{inline_md(it)}</li>" for it in items)
-            out.append(f"<{tag}>{lis}</{tag}>")
+            while buf and not buf[-1].strip():
+                buf.pop()
+            code = "\n".join(l[4:] if l.startswith("    ") else l for l in buf)
+            out.append("<pre><code>" + escape_html(code) + "</code></pre>")
             continue
         if not line.strip():
             i += 1
             continue
         buf = [line]
         i += 1
-        while i < n and lines[i].strip() and not is_block_start(lines[i]):
+        while i < n and lines[i].strip() and not is_block_start(
+                lines[i], lines[i + 1] if i + 1 < n else ""):
             buf.append(lines[i])
             i += 1
         out.append("<p>" + "<br>".join(inline_md(b) for b in buf) + "</p>")
@@ -701,6 +817,8 @@ h1, h2, h3, h4, h5, h6 { line-height: 1.3; color: #fff;
 .content ul, .content ol { padding-left: 24px; margin: 12px 0;
   color: #d4d4d8; }
 .content li { margin: 6px 0; }
+.content li.task { list-style: none; }
+.content li.task input { margin-right: 6px; accent-color: #d4d4d8; }
 .content code { background: #1a1a1a; color: #d4d4d8; padding: 2px 6px;
   border-radius: 5px; border: 1px solid var(--border);
   font-family: var(--font-mono); font-size: 0.86em; }
