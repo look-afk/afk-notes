@@ -200,6 +200,10 @@ def inline_md(text):
     text = re.sub(r"(?<![\w*])_([^_\n<>]+)_(?![\w*])", r"<em>\1</em>", text)
     text = re.sub(r"~~([^~\n]+)~~", r"<del>\1</del>", text)
     text = re.sub(r"==([^=\n]+)==", r"<mark>\1</mark>", text)
+    text = re.sub(r"^\*\*\*(?!\*)(.+)$", r"<strong><em>\1</em></strong>", text)
+    text = re.sub(r"^\*\*(?!\*)(.+)$", r"<strong>\1</strong>", text)
+    text = re.sub(r"^___(?!_)(.+)$", r"<strong><em>\1</em></strong>", text)
+    text = re.sub(r"^__(?!_)(.+)$", r"<strong>\1</strong>", text)
 
     def img(m):
         alt, src, title = m.group(1), m.group(2), m.group(3)
