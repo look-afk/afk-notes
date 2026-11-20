@@ -819,6 +819,11 @@ a:focus-visible, button:focus-visible, input:focus-visible {
   padding: 10px 16px; border-radius: 0 0 8px 0; }
 .skip:focus { left: 0; top: 0; }
 
+details { margin: 0; }
+details > summary { cursor: pointer; user-select: none; }
+details[open] > .cards { display: block; }
+details:not([open]) > .cards { display: none; }
+
 .app { display: grid; grid-template-columns: 240px minmax(0, 1fr);
   min-height: 100vh; }
 .sidebar { position: sticky; top: 0; height: 100vh; overflow-y: auto;
@@ -1171,13 +1176,17 @@ def build_index(cfg, notes, folder_names):
                 f'<span class="card-time"><span>{escape_html(it["mtime"])}</span>'
                 f'<span class="arr" aria-hidden="true">&rarr;</span></span></a>'
             )
-        folders_html.append(
+        folder_cards = "".join(cards)
+folders_html.append(
             f'<section class="folder" id="folder-{slug}" aria-labelledby="fh-{slug}">'
+            f'<details open>'
             f'<div class="folder-head">'
             f'<span class="fi">{ICON_FOLDER}</span>'
             f'<h2 id="fh-{slug}">{escape_html(folder)}</h2>'
             f'<span class="count">{plural_notes(len(items))}</span>'
-            f'</div><div class="cards">{"".join(cards)}</div></section>'
+            f'</div>'
+            f'<div class="cards" aria-hidden="true">{folder_cards}</div>'
+            f'</details>'
         )
     empty = ('<div class="empty"><div class="ei">' + ICON_BELL + '</div>'
              '<p>Пока нет заметок. Добавь папку в afk.py '
