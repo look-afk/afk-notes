@@ -1314,6 +1314,36 @@ def collect_files(cfg):
 
 
 def publish(cfg, quiet=False, dry_run=False):
+    folder_counts = {}
+    for folder, path, rel, subfolder in files:
+        if path.suffix.lower() == ".md":
+            name = folder_names[folder]
+            folder_counts[name] = folder_counts.get(name, 0) + 1
+    folders_list = sorted(folder_counts.items())
+    state = cfg["state"]
+    changes = []
+
+    # Preserve the complete relative path below each configured vault folder.
+    stems = {}
+    for folder, path, rel, subfolder in files:
+        if path.suffix.lower() == ".md":
+            stems[path.stem.lower()] = None
+    for folder, path, rel, subfolder in files:
+        if path.suffix.lower() == ".md":
+            site = Path("notes") / folder_names[folder] / rel.with_suffix(".html")
+            stems[path.stem.lower()] = str(site).replace("\\", "/")
+
+    global WIKI, ASSETS
+    WIKI = stems
+    ASSETS = {}
+    for folder, path, rel, subfolder in files:
+        if path.suffix.lower() in ASSET_EXT:
+            site = Path("notes") / folder_names[folder] / rel
+            ASSETS[str(rel).replace("\\", "/").lower()] = str(site).replace("\\", "/")
+            ASSETS[path.name.lower()] = str(site).replace("\\", "/")
+
+    seen = set()
+    notes = []
     ok, err = ensure_repo()
     if not ok:
         return [], f"Ошибка репозитория: {err}"
