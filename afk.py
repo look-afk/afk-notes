@@ -1383,7 +1383,7 @@ def publish(cfg, quiet=False, dry_run=False):
                 text_content = path.read_text(encoding="utf-8", errors="replace").lstrip("\ufeff")
                 title = path.stem
                 for ln in text_content.split("\n"):
-                    mm = re.match(r"^#\\s+(.+)$", ln.strip())
+                    mm = re.match(r"^#\s+(.+)$", ln.strip())
                     if mm:
                         title = mm.group(1).strip()
                         break
