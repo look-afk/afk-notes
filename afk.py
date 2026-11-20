@@ -921,9 +921,9 @@ main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto;
 .folder > details > summary, .subfolder > summary { list-style: none; cursor: pointer; user-select: none; }
 .folder > details > summary::-webkit-details-marker, .subfolder > summary::-webkit-details-marker { display:none; }
 .subfolder { margin: 8px 0 8px 18px; border-left: 1px solid var(--border2); padding-left: 12px; }
-.subfolder > summary { display:flex; align-items:center; gap:10px; padding:8px 0; color:var(--muted); }
-.subfolder-name { font-weight:600; color:var(--text); }
-.subfolder-content { padding-left:12px; }
+.subfolder > summary.folder-head { margin: 0 0 12px; padding: 0; }
+.subfolder > summary.folder-head h2 { font-size: 0.875rem; font-weight: 600; color: #d4d4d8; margin: 0; }
+.subfolder-content { padding-left:18px; }
 .folder-content { padding-top:4px; }
 .folder-head { display: flex; align-items: center; gap: 10px;
   margin-bottom: 12px; }
@@ -1178,8 +1178,8 @@ def build_index(cfg, notes, folder_names):
     def render(node, folder):
         out = []
         for name, child in sorted(node["dirs"].items(), key=lambda x:x[0].lower()):
-            out.append(f'<details class="subfolder"><summary><span class="fi">{ICON_FOLDER}</span>'
-                       f'<span class="subfolder-name">{escape_html(name)}</span>'
+            out.append(f'<details class="subfolder"><summary class="folder-head subfolder-head"><span class="fi">{ICON_FOLDER}</span>'
+                       f'<h2>{escape_html(name)}</h2>'
                        f'<span class="count">{plural_notes(child["count"])}</span></summary>'
                        f'<div class="subfolder-content">{render(child, folder)}</div></details>')
         if node["notes"]:
