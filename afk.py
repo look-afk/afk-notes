@@ -1323,31 +1323,30 @@ def publish(cfg, quiet=False, dry_run=False):
     folder_counts = {}
     for folder, path, rel, subfolder in files:
         if path.suffix.lower() == ".md":
-            name = subfolder or folder_names[folder]
+            name = folder_names[folder]
             folder_counts[name] = folder_counts.get(name, 0) + 1
     folders_list = sorted(folder_counts.items())
     state = cfg["state"]
     changes = []
 
+    # Preserve the complete relative path below each configured vault folder.
     stems = {}
     for folder, path, rel, subfolder in files:
         if path.suffix.lower() == ".md":
             stems[path.stem.lower()] = None
     for folder, path, rel, subfolder in files:
         if path.suffix.lower() == ".md":
-            sf = subfolder or folder_names[folder]
-            site = Path("notes") / sf / rel.with_suffix(".html")
-            stems[path.stem.lower()] = str(site)
+            site = Path("notes") / folder_names[folder] / rel.with_suffix(".html")
+            stems[path.stem.lower()] = str(site).replace("\\", "/")
 
     global WIKI, ASSETS
     WIKI = stems
     ASSETS = {}
     for folder, path, rel, subfolder in files:
         if path.suffix.lower() in ASSET_EXT:
-            sf = subfolder or folder_names[folder]
-            site = Path("notes") / sf / rel
-            ASSETS[str(rel).replace("\\", "/").lower()] = str(site)
-            ASSETS[path.name.lower()] = str(site)
+            site = Path("notes") / folder_names[folder] / rel
+            ASSETS[str(rel).replace("\\", "/").lower()] = str(site).replace("\\", "/")
+            ASSETS[path.name.lower()] = str(site).replace("\\", "/")
 
     seen = set()
     notes = []
@@ -1355,47 +1354,56 @@ def publish(cfg, quiet=False, dry_run=False):
         key = str(path.resolve())
         seen.add(key)
         ext = path.suffix.lower()
-        sf = subfolder or folder_names[folder]
-        if ext == ".md":
-            site = Path("notes") / sf / rel.with_suffix(".html")
-        else:
-            site = Path("notes") / sf / rel
+        root_name = folder_names[folder]
+        site = (Path("notes") / root_name / rel.with_suffix(".html")
+                if ext == ".md" else Path("notes") / root_name / rel)
+        site_str = str(site).replace("\\", "/")
         h = hash_file(path)
         old = state.get(key)
-        if old and old.get("hash") == h and (REPO_DIR / site).exists():
-            if ext == ".md":
-                notes.append(
-                    {"folder": sf, "site": str(site).replace("\\", "/"),
-                     "title": old.get("title", path.stem), "rel": str(rel).replace("\\", "/"),
-                      "mtime": old.get("mtime", "")}
-                )
-            continue
         dest = REPO_DIR / site
+
+        if old and old.get("hash") == h and dest.exists():
+            if ext == ".md":
+                notes.append({"folder": root_name, "site": site_str,
+                              "title": old.get("title", path.stem),
+                              "rel": str(rel).replace("\\", "/"),
+                              "mtime": old.get("mtime", "")})
+            # Remove any obsolete published path left by older versions.
+            old_site = old.get("site", "")
+            if old_site and old_site != site_str:
+                obsolete = REPO_DIR / old_site
+                if obsolete.exists() and obsolete.is_file():
+                    obsolete.unlink()
+            state[key]["site"] = site_str
+            continue
+
         if not dry_run:
             dest.parent.mkdir(parents=True, exist_ok=True)
             if ext == ".md":
-                text = path.read_text(encoding="utf-8", errors="replace").lstrip("﻿")
+                text_content = path.read_text(encoding="utf-8", errors="replace").lstrip("\ufeff")
                 title = path.stem
-                for ln in text.split("\n"):
-                    mm = re.match(r"^#\s+(.+)$", ln.strip())
+                for ln in text_content.split("\n"):
+                    mm = re.match(r"^#\\s+(.+)$", ln.strip())
                     if mm:
                         title = mm.group(1).strip()
                         break
                 PAGE_FEATS.clear()
-                body = md_to_html(text)
+                body = md_to_html(text_content)
                 mtime = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
-                dest.write_text(page_html(title, body, str(site).replace("\\", "/"),
-                                          sf, mtime,
-                                          folders=folders_list), encoding="utf-8")
-                state[key] = {"hash": h, "site": str(site).replace("\\", "/"),
-                              "title": title, "mtime": mtime}
-                notes.append({"folder": sf, "site": str(site).replace("\\", "/"),
-                              "title": title, "rel": str(rel).replace("\\", "/"), "mtime": mtime})
+                dest.write_text(page_html(title, body, site_str, root_name, mtime,
+                                         folders=folders_list), encoding="utf-8")
+                state[key] = {"hash": h, "site": site_str, "title": title, "mtime": mtime}
+                notes.append({"folder": root_name, "site": site_str, "title": title,
+                              "rel": str(rel).replace("\\", "/"), "mtime": mtime})
             else:
                 shutil.copy2(path, dest)
-                state[key] = {"hash": h, "site": str(site).replace("\\", "/"), "mtime": ""}
+                state[key] = {"hash": h, "site": site_str, "mtime": ""}
+            if old and old.get("site") and old.get("site") != site_str:
+                obsolete = REPO_DIR / old["site"]
+                if obsolete.exists() and obsolete.is_file():
+                    obsolete.unlink()
         kind = "new" if not old else "upd"
-        changes.append((kind, str(rel).replace("\\", "/"), sf))
+        changes.append((kind, str(rel).replace("\\", "/"), root_name))
 
     for key in list(state.keys()):
         if key in seen:
@@ -1411,7 +1419,7 @@ def publish(cfg, quiet=False, dry_run=False):
             continue
         entry = state.pop(key)
         site_file = REPO_DIR / entry.get("site", "")
-        if site_file.exists():
+        if site_file.exists() and site_file.is_file():
             site_file.unlink()
         changes.append(("del", entry.get("site", key), ""))
 
