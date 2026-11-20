@@ -1280,6 +1280,17 @@ def ensure_repo():
     return True, ""
 
 
+def _get_subfolder_name(rel):
+    if len(rel.parts) <= 1:
+        return None
+    parent_parts = rel.parts[:-1]
+    if not parent_parts:
+        return None
+    if len(parent_parts) == 1:
+        return parent_parts[0]
+    return "/".join(parent_parts)
+
+
 def collect_files(cfg):
     found = []
     for folder in cfg["folders"]:
@@ -1297,7 +1308,8 @@ def collect_files(cfg):
                 continue
             if path.suffix.lower() not in ASSET_EXT and path.suffix.lower() != ".md":
                 continue
-            found.append((folder, path, rel))
+            subfolder = _get_subfolder_name(rel)
+            found.append((folder, path, rel, subfolder))
     return found
 
 
@@ -1309,50 +1321,53 @@ def publish(cfg, quiet=False, dry_run=False):
     files = collect_files(cfg)
     folder_names = folder_display_names(cfg["folders"])
     folder_counts = {}
-    for folder, path, rel in files:
+    for folder, path, rel, subfolder in files:
         if path.suffix.lower() == ".md":
-            name = folder_names[folder]
+            name = subfolder or folder_names[folder]
             folder_counts[name] = folder_counts.get(name, 0) + 1
     folders_list = sorted(folder_counts.items())
     state = cfg["state"]
     changes = []
 
     stems = {}
-    for folder, path, rel in files:
+    for folder, path, rel, subfolder in files:
         if path.suffix.lower() == ".md":
             stems[path.stem.lower()] = None
-    for folder, path, rel in files:
+    for folder, path, rel, subfolder in files:
         if path.suffix.lower() == ".md":
-            site = Path("notes") / folder_names[folder] / rel.with_suffix(".html")
+            sf = subfolder or folder_names[folder]
+            site = Path("notes") / sf / rel.with_suffix(".html")
             stems[path.stem.lower()] = str(site)
 
     global WIKI, ASSETS
     WIKI = stems
     ASSETS = {}
-    for folder, path, rel in files:
+    for folder, path, rel, subfolder in files:
         if path.suffix.lower() in ASSET_EXT:
-            site = Path("notes") / folder_names[folder] / rel
+            sf = subfolder or folder_names[folder]
+            site = Path("notes") / sf / rel
             ASSETS[str(rel).replace("\\", "/").lower()] = str(site)
             ASSETS[path.name.lower()] = str(site)
 
     seen = set()
     notes = []
-    for folder, path, rel in files:
+    for folder, path, rel, subfolder in files:
         key = str(path.resolve())
         seen.add(key)
         ext = path.suffix.lower()
+        sf = subfolder or folder_names[folder]
         if ext == ".md":
-            site = Path("notes") / folder_names[folder] / rel.with_suffix(".html")
+            site = Path("notes") / sf / rel.with_suffix(".html")
         else:
-            site = Path("notes") / folder_names[folder] / rel
+            site = Path("notes") / sf / rel
         h = hash_file(path)
         old = state.get(key)
         if old and old.get("hash") == h and (REPO_DIR / site).exists():
             if ext == ".md":
                 notes.append(
-                    {"folder": folder_names[folder], "site": str(site).replace("\\", "/"),
+                    {"folder": sf, "site": str(site).replace("\\", "/"),
                      "title": old.get("title", path.stem), "rel": str(rel).replace("\\", "/"),
-                     "mtime": old.get("mtime", "")}
+                      "mtime": old.get("mtime", "")}
                 )
             continue
         dest = REPO_DIR / site
@@ -1370,17 +1385,17 @@ def publish(cfg, quiet=False, dry_run=False):
                 body = md_to_html(text)
                 mtime = datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
                 dest.write_text(page_html(title, body, str(site).replace("\\", "/"),
-                                          folder_names[folder], mtime,
+                                          sf, mtime,
                                           folders=folders_list), encoding="utf-8")
                 state[key] = {"hash": h, "site": str(site).replace("\\", "/"),
                               "title": title, "mtime": mtime}
-                notes.append({"folder": folder_names[folder], "site": str(site).replace("\\", "/"),
+                notes.append({"folder": sf, "site": str(site).replace("\\", "/"),
                               "title": title, "rel": str(rel).replace("\\", "/"), "mtime": mtime})
             else:
                 shutil.copy2(path, dest)
                 state[key] = {"hash": h, "site": str(site).replace("\\", "/"), "mtime": ""}
         kind = "new" if not old else "upd"
-        changes.append((kind, str(rel).replace("\\", "/"), folder_names[folder]))
+        changes.append((kind, str(rel).replace("\\", "/"), sf))
 
     for key in list(state.keys()):
         if key in seen:
