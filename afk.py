@@ -1177,7 +1177,7 @@ def build_index(cfg, notes, folder_names):
                 f'<span class="arr" aria-hidden="true">&rarr;</span></span></a>'
             )
         folder_cards = "".join(cards)
-folders_html.append(
+        folders_html.append(
             f'<section class="folder" id="folder-{slug}" aria-labelledby="fh-{slug}">'
             f'<details open>'
             f'<div class="folder-head">'
