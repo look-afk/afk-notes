@@ -918,6 +918,13 @@ main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto;
 .tg svg { width: 15px; height: 15px; }
 
 .folder { margin: 0 0 34px; scroll-margin-top: 68px; }
+.folder > details > summary, .subfolder > summary { list-style: none; cursor: pointer; user-select: none; }
+.folder > details > summary::-webkit-details-marker, .subfolder > summary::-webkit-details-marker { display:none; }
+.subfolder { margin: 8px 0 8px 18px; border-left: 1px solid var(--border2); padding-left: 12px; }
+.subfolder > summary { display:flex; align-items:center; gap:10px; padding:8px 0; color:var(--muted); }
+.subfolder-name { font-weight:600; color:var(--text); }
+.subfolder-content { padding-left:12px; }
+.folder-content { padding-top:4px; }
 .folder-head { display: flex; align-items: center; gap: 10px;
   margin-bottom: 12px; }
 .fi { width: 28px; height: 28px; border-radius: 7px; flex: none;
@@ -1158,87 +1165,64 @@ def build_index(cfg, notes, folder_names):
     groups = {}
     for note in notes:
         groups.setdefault(note["folder"], []).append(note)
-    folders_sorted = sorted(groups)
-    folders_html = []
-    for folder in folders_sorted:
-        items = sorted(groups[folder], key=lambda x: x["title"].lower())
-        slug = slugify(folder)
-        cards = []
-        for it in items:
-            hay = escape_html(f'{it["title"]} {it["rel"]} {folder}')
-            cards.append(
-                f'<a class="card" href="{url_for(it["site"])}" data-search="{hay}">'
-                f'<span class="card-ic">{ICON_FILE}</span>'
-                f'<span class="card-body">'
+
+    def card(it, folder):
+        hay = escape_html(f'{it["title"]} {it["rel"]} {folder}')
+        return (f'<a class="card" href="{url_for(it["site"])}" data-search="{hay}">'
+                f'<span class="card-ic">{ICON_FILE}</span><span class="card-body">'
                 f'<span class="card-title">{escape_html(it["title"])}</span>'
-                f'<span class="card-path">{escape_html(it["rel"])}</span>'
-                f'</span>'
+                f'<span class="card-path">{escape_html(it["rel"])}</span></span>'
                 f'<span class="card-time"><span>{escape_html(it["mtime"])}</span>'
-                f'<span class="arr" aria-hidden="true">&rarr;</span></span></a>'
-            )
-        folder_cards = "".join(cards)
-        folders_html.append(
-            f'<section class="folder" id="folder-{slug}" aria-labelledby="fh-{slug}">'
-            f'<details open>'
-            f'<div class="folder-head">'
-            f'<span class="fi">{ICON_FOLDER}</span>'
-            f'<h2 id="fh-{slug}">{escape_html(folder)}</h2>'
-            f'<span class="count">{plural_notes(len(items))}</span>'
-            f'</div>'
-            f'<div class="cards" aria-hidden="true">{folder_cards}</div>'
-            f'</details>'
-        )
-    empty = ('<div class="empty"><div class="ei">' + ICON_BELL + '</div>'
-             '<p>Пока нет заметок. Добавь папку в afk.py '
-             'и сохрани файл в Obsidian.</p></div>' if not notes else "")
+                f'<span class="arr" aria-hidden="true">&rarr;</span></span></a>')
+
+    def render(node, folder):
+        out = []
+        for name, child in sorted(node["dirs"].items(), key=lambda x:x[0].lower()):
+            out.append(f'<details class="subfolder"><summary><span class="fi">{ICON_FOLDER}</span>'
+                       f'<span class="subfolder-name">{escape_html(name)}</span>'
+                       f'<span class="count">{plural_notes(child["count"])}</span></summary>'
+                       f'<div class="subfolder-content">{render(child, folder)}</div></details>')
+        if node["notes"]:
+            out.append('<div class="cards">' + "".join(card(it,folder) for it in sorted(node["notes"],key=lambda x:x["title"].lower())) + '</div>')
+        return "".join(out)
+
+    folders_html = []
+    folders_sorted = sorted(groups)
+    for folder in folders_sorted:
+        items = groups[folder]
+        tree = {"dirs": {}, "notes": [], "count": 0}
+        for it in items:
+            node = tree
+            for part in Path(it["rel"]).parts[:-1]:
+                node = node["dirs"].setdefault(part, {"dirs": {}, "notes": [], "count": 0})
+            node["notes"].append(it)
+        def tally(node):
+            node["count"] = len(node["notes"]) + sum(tally(ch) for ch in node["dirs"].values())
+            return node["count"]
+        tally(tree)
+        slug = slugify(folder)
+        folders_html.append(f'<section class="folder" id="folder-{slug}"><details open>'
+            f'<summary class="folder-head"><span class="fi">{ICON_FOLDER}</span><h2>{escape_html(folder)}</h2>'
+            f'<span class="count">{plural_notes(len(items))}</span></summary>'
+            f'<div class="folder-content">{render(tree,folder)}</div></details></section>')
+
+    empty = ('<div class="empty"><div class="ei">' + ICON_BELL + '</div><p>Пока нет заметок. Добавь папку в afk.py и сохрани файл в Obsidian.</p></div>' if not notes else "")
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
     side_folders = [(f, len(groups[f])) for f in folders_sorted]
     body = f"""
-<div class="page-head">
-<h1>Заметки</h1>
-<p class="page-sub">Из Obsidian — публикуются автоматически, как только сохранил файл</p>
-<div class="stats"><span><b>{plural_notes(len(notes))}</b></span><span><b>{len(groups)}</b> папок</span></div>
-</div>
-<div class="toolbar">
-<span class="result-count" id="rcount">{plural_notes(len(notes))}</span>
-<div class="toggle" role="group" aria-label="Вид отображения">
-<button type="button" class="tg" data-view="grid" aria-pressed="true" aria-label="Сетка">{ICON_GRID}</button>
-<button type="button" class="tg" data-view="list" aria-pressed="false" aria-label="Список">{ICON_LIST}</button>
-</div>
-</div>
-{empty}
-{"".join(folders_html)}
-<div class="empty" id="nores" hidden><div class="ei">{ICON_BELL}</div>
-<p>Ничего не найдено. Попробуй другой запрос.</p></div>
-"""
+<div class="page-head"><h1>Заметки</h1><p class="page-sub">Из Obsidian — публикуются автоматически, как только сохранил файл</p>
+<div class="stats"><span><b>{plural_notes(len(notes))}</b></span><span><b>{len(groups)}</b> папок</span></div></div>
+<div class="toolbar"><span class="result-count" id="rcount">{plural_notes(len(notes))}</span>
+<div class="toggle" role="group" aria-label="Вид отображения"><button type="button" class="tg" data-view="grid" aria-pressed="true" aria-label="Сетка">{ICON_GRID}</button>
+<button type="button" class="tg" data-view="list" aria-pressed="false" aria-label="Список">{ICON_LIST}</button></div></div>
+{empty}{"".join(folders_html)}
+<div class="empty" id="nores" hidden><div class="ei">{ICON_BELL}</div><p>Ничего не найдено. Попробуй другой запрос.</p></div>"""
     html = f"""<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AFK Notes</title>
-{FONT_LINK}
-<link rel="icon" href="favicon.svg" type="image/svg+xml">
-<style>{PAGE_CSS}</style>
-</head>
-<body>
-<a class="skip" href="#content">Перейти к содержимому</a>
-<div class="app">
-{sidebar_html("", side_folders, None, len(notes), True)}
-<div class="main-col">
-<header class="topbar">
-<span class="tb-title">Все заметки</span>
-<span class="tb-right"><span class="np-date">обновлено {now}</span>{gh_anchor("tb-gh", ICON_GITHUB)}</span>
-</header>
-<main id="content">
-{body}
-</main>
-</div>
-</div>
-<script>{SITE_JS}</script>
-</body>
-</html>
-"""
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AFK Notes</title>{FONT_LINK}<link rel="icon" href="favicon.svg" type="image/svg+xml"><style>{PAGE_CSS}</style></head>
+<body><a class="skip" href="#content">Перейти к содержимому</a><div class="app">{sidebar_html("", side_folders, None, len(notes), True)}
+<div class="main-col"><header class="topbar"><span class="tb-title">Все заметки</span><span class="tb-right"><span class="np-date">обновлено {now}</span>{gh_anchor("tb-gh", ICON_GITHUB)}</span></header>
+<main id="content">{body}</main></div></div><script>{SITE_JS}</script></body></html>"""
     index_path = REPO_DIR / "index.html"
     old = index_path.read_text(encoding="utf-8") if index_path.exists() else ""
     if old != html:
