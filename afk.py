@@ -365,7 +365,7 @@ def render_list_block(block):
 
 
 def md_to_html(md):
-    md = md.lstrip("﻿").replace("\r\n", "\n").replace("\r", "\n")
+    md = md.lstrip("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
     props_html = ""
     if md.startswith("---\n"):
         end = md.find("\n---", 4)
@@ -721,6 +721,10 @@ SITE_JS = """
     if (a >= 2 && a <= 4 && (b < 12 || b > 14)) return n + ' заметки';
     return n + ' заметок';
   }
+  function folderDetails(f) {
+    var d = f.firstElementChild;
+    return d && d.tagName === 'DETAILS' ? d : null;
+  }
   function apply(v) {
     v = (v || '').trim().toLowerCase();
     var shown = 0;
@@ -734,6 +738,17 @@ SITE_JS = """
       var any = [].slice.call(f.querySelectorAll('.card'))
         .some(function (c) { return !c.hidden; });
       f.hidden = !!v && !any;
+      var d = folderDetails(f);
+      if (!d) return;
+      if (v) {
+        if (d.getAttribute('data-was') === null) {
+          d.setAttribute('data-was', d.open ? '1' : '0');
+        }
+        if (any) d.open = true;
+      } else if (d.getAttribute('data-was') !== null) {
+        d.open = d.getAttribute('data-was') === '1';
+        d.removeAttribute('data-was');
+      }
     });
     if (rcount) rcount.textContent = v ? shown + ' из ' + total : plural(total);
     if (nores) nores.hidden = !(v && shown === 0 && total > 0);
@@ -764,6 +779,19 @@ SITE_JS = """
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     if (q) { e.preventDefault(); q.focus(); q.select(); }
   });
+  function openHash() {
+    var id = '';
+    try { id = decodeURIComponent((location.hash || '').slice(1)); } catch (err) {}
+    var el = id ? document.getElementById(id) : null;
+    if (!el || !el.classList.contains('folder')) return;
+    for (var p = el; p; p = p.parentElement) {
+      var d = p === el ? folderDetails(p) : (p.tagName === 'DETAILS' ? p : null);
+      if (d) d.open = true;
+    }
+    el.scrollIntoView();
+  }
+  window.addEventListener('hashchange', openHash);
+  openHash();
   var tgs = [].slice.call(document.querySelectorAll('.tg'));
   function setView(v) {
     [].slice.call(document.querySelectorAll('.cards')).forEach(function (el) {
@@ -821,8 +849,6 @@ a:focus-visible, button:focus-visible, input:focus-visible {
 
 details { margin: 0; }
 details > summary { cursor: pointer; user-select: none; }
-details[open] > .cards { display: block; }
-details:not([open]) > .cards { display: none; }
 
 .app { display: grid; grid-template-columns: 240px minmax(0, 1fr);
   min-height: 100vh; }
@@ -917,20 +943,22 @@ main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto;
 .tg[aria-pressed="true"] { background: var(--hover); color: #fff; }
 .tg svg { width: 15px; height: 15px; }
 
+/* Папки: корневая и вложенные используют одну и ту же разметку (.folder),
+   вложенность любой глубины. */
 .folder { margin: 0 0 34px; scroll-margin-top: 68px; }
-.folder > details > summary, .subfolder > summary { list-style: none; cursor: pointer; user-select: none; }
-.folder > details > summary::-webkit-details-marker, .subfolder > summary::-webkit-details-marker { display:none; }
-.subfolder { margin: 12px 0; padding: 14px 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; min-width: 0; }
-.subfolder > summary.folder-head { margin: 0 0 12px; padding: 0; }
-.subfolder > summary.folder-head h2 { font-size: 0.875rem; font-weight: 600; color: #d4d4d8; margin: 0; }
- .subfolder > summary.folder-head::before { content: "›"; color: var(--dim); font-size: 1.15rem; transition: transform .15s; }
- .subfolder[open] > summary.folder-head::before { transform: rotate(90deg); }
-.subfolder-content { padding: 14px 0 0; }
- .subfolder-content > .subfolder { margin: 12px 0; }
- .subfolder > summary.folder-head .fi { width: 34px; height: 34px; }
-.folder-content { padding-top:4px; }
+.folder > details > summary { list-style: none; cursor: pointer;
+  user-select: none; }
+.folder > details > summary::-webkit-details-marker { display: none; }
 .folder-head { display: flex; align-items: center; gap: 10px;
   margin-bottom: 12px; }
+.folder-head::before { content: "\\203A"; flex: none; width: 10px;
+  text-align: center; color: var(--dim); font-size: 1.15rem; line-height: 1;
+  transition: transform .15s; }
+.folder > details[open] > .folder-head::before { transform: rotate(90deg); }
+.folder-content { padding-top: 4px; }
+.folder-content > .folder { margin: 0 0 22px; padding-left: 18px;
+  border-left: 1px solid var(--border); }
+.folder-content > .folder:last-child { margin-bottom: 0; }
 .fi { width: 28px; height: 28px; border-radius: 7px; flex: none;
   background: var(--panel2); border: 1px solid var(--border2);
   display: flex; align-items: center; justify-content: center;
@@ -1079,6 +1107,7 @@ h1, h2, h3, h4, h5, h6 { line-height: 1.3; color: #fff;
   main { padding: 20px 16px 70px; }
   .content { padding: 4px 18px 26px; }
   .cards { grid-template-columns: 1fr; }
+  .folder-content > .folder { padding-left: 12px; }
 }
 """
 
@@ -1165,6 +1194,17 @@ def plural_notes(n):
     return f"{n} {w}"
 
 
+def new_tree_node():
+    return {"dirs": {}, "notes": [], "count": 0}
+
+
+def tally_tree(node):
+    """Считает заметки во всём поддереве (рекурсивно, любая глубина)."""
+    node["count"] = len(node["notes"]) + sum(
+        tally_tree(ch) for ch in node["dirs"].values())
+    return node["count"]
+
+
 def build_index(cfg, notes, folder_names):
     groups = {}
     for note in notes:
@@ -1179,36 +1219,39 @@ def build_index(cfg, notes, folder_names):
                 f'<span class="card-time"><span>{escape_html(it["mtime"])}</span>'
                 f'<span class="arr" aria-hidden="true">&rarr;</span></span></a>')
 
-    def render(node, folder):
-        out = []
-        for name, child in sorted(node["dirs"].items(), key=lambda x:x[0].lower()):
-            out.append(f'<details class="subfolder"><summary class="folder-head subfolder-head"><span class="fi">{ICON_FOLDER}</span>'
-                       f'<h2>{escape_html(name)}</h2>'
-                       f'<span class="count">{plural_notes(child["count"])}</span></summary>'
-                       f'<div class="subfolder-content">{render(child, folder)}</div></details>')
+    def render_folder(name, node, fid, folder, nested):
+        """Одна и та же разметка для корневой и любой вложенной папки."""
+        children = "".join(
+            render_folder(cname, child, f"{fid}--{slugify(cname)}", folder, True)
+            for cname, child in sorted(node["dirs"].items(),
+                                       key=lambda x: x[0].lower()))
+        cards = ""
         if node["notes"]:
-            out.append('<div class="cards">' + "".join(card(it,folder) for it in sorted(node["notes"],key=lambda x:x["title"].lower())) + '</div>')
-        return "".join(out)
+            cards = ('<div class="cards">'
+                     + "".join(card(it, folder) for it in
+                               sorted(node["notes"], key=lambda x: x["title"].lower()))
+                     + '</div>')
+        open_attr = "" if nested else " open"
+        return (f'<section class="folder" id="{fid}"><details{open_attr}>'
+                f'<summary class="folder-head"><span class="fi">{ICON_FOLDER}</span>'
+                f'<h2>{escape_html(name)}</h2>'
+                f'<span class="count">{plural_notes(node["count"])}</span></summary>'
+                f'<div class="folder-content">{children}{cards}</div>'
+                f'</details></section>')
 
     folders_html = []
     folders_sorted = sorted(groups)
     for folder in folders_sorted:
         items = groups[folder]
-        tree = {"dirs": {}, "notes": [], "count": 0}
+        tree = new_tree_node()
         for it in items:
             node = tree
             for part in Path(it["rel"]).parts[:-1]:
-                node = node["dirs"].setdefault(part, {"dirs": {}, "notes": [], "count": 0})
+                node = node["dirs"].setdefault(part, new_tree_node())
             node["notes"].append(it)
-        def tally(node):
-            node["count"] = len(node["notes"]) + sum(tally(ch) for ch in node["dirs"].values())
-            return node["count"]
-        tally(tree)
-        slug = slugify(folder)
-        folders_html.append(f'<section class="folder" id="folder-{slug}"><details open>'
-            f'<summary class="folder-head"><span class="fi">{ICON_FOLDER}</span><h2>{escape_html(folder)}</h2>'
-            f'<span class="count">{plural_notes(len(items))}</span></summary>'
-            f'<div class="folder-content">{render(tree,folder)}</div></details></section>')
+        tally_tree(tree)
+        folders_html.append(
+            render_folder(folder, tree, f"folder-{slugify(folder)}", folder, False))
 
     empty = ('<div class="empty"><div class="ei">' + ICON_BELL + '</div><p>Пока нет заметок. Добавь папку в afk.py и сохрани файл в Obsidian.</p></div>' if not notes else "")
     now = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -1311,36 +1354,6 @@ def collect_files(cfg):
 
 
 def publish(cfg, quiet=False, dry_run=False):
-    folder_counts = {}
-    for folder, path, rel, subfolder in files:
-        if path.suffix.lower() == ".md":
-            name = folder_names[folder]
-            folder_counts[name] = folder_counts.get(name, 0) + 1
-    folders_list = sorted(folder_counts.items())
-    state = cfg["state"]
-    changes = []
-
-    # Preserve the complete relative path below each configured vault folder.
-    stems = {}
-    for folder, path, rel, subfolder in files:
-        if path.suffix.lower() == ".md":
-            stems[path.stem.lower()] = None
-    for folder, path, rel, subfolder in files:
-        if path.suffix.lower() == ".md":
-            site = Path("notes") / folder_names[folder] / rel.with_suffix(".html")
-            stems[path.stem.lower()] = str(site).replace("\\", "/")
-
-    global WIKI, ASSETS
-    WIKI = stems
-    ASSETS = {}
-    for folder, path, rel, subfolder in files:
-        if path.suffix.lower() in ASSET_EXT:
-            site = Path("notes") / folder_names[folder] / rel
-            ASSETS[str(rel).replace("\\", "/").lower()] = str(site).replace("\\", "/")
-            ASSETS[path.name.lower()] = str(site).replace("\\", "/")
-
-    seen = set()
-    notes = []
     ok, err = ensure_repo()
     if not ok:
         return [], f"Ошибка репозитория: {err}"
@@ -1358,9 +1371,6 @@ def publish(cfg, quiet=False, dry_run=False):
 
     # Preserve the complete relative path below each configured vault folder.
     stems = {}
-    for folder, path, rel, subfolder in files:
-        if path.suffix.lower() == ".md":
-            stems[path.stem.lower()] = None
     for folder, path, rel, subfolder in files:
         if path.suffix.lower() == ".md":
             site = Path("notes") / folder_names[folder] / rel.with_suffix(".html")
@@ -1609,7 +1619,7 @@ def do_publish(cfg):
 
 def files_sig(cfg):
     sig = {}
-    for _folder, path, _rel in collect_files(cfg):
+    for _folder, path, _rel, _sub in collect_files(cfg):
         try:
             st = path.stat()
             sig[str(path)] = (st.st_mtime_ns, st.st_size)
