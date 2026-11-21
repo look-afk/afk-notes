@@ -920,12 +920,14 @@ main { flex: 1; width: 100%; max-width: 1120px; margin: 0 auto;
 .folder { margin: 0 0 34px; scroll-margin-top: 68px; }
 .folder > details > summary, .subfolder > summary { list-style: none; cursor: pointer; user-select: none; }
 .folder > details > summary::-webkit-details-marker, .subfolder > summary::-webkit-details-marker { display:none; }
-.subfolder { margin: 8px 0 8px 18px; border-left: 1px solid var(--border2); padding-left: 12px; }
+.subfolder { margin: 12px 0; padding: 14px 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; min-width: 0; }
 .subfolder > summary.folder-head { margin: 0 0 12px; padding: 0; }
 .subfolder > summary.folder-head h2 { font-size: 0.875rem; font-weight: 600; color: #d4d4d8; margin: 0; }
  .subfolder > summary.folder-head::before { content: "›"; color: var(--dim); font-size: 1.15rem; transition: transform .15s; }
  .subfolder[open] > summary.folder-head::before { transform: rotate(90deg); }
-.subfolder-content { padding-left:18px; }
+.subfolder-content { padding: 14px 0 0; }
+ .subfolder-content > .subfolder { margin: 12px 0; }
+ .subfolder > summary.folder-head .fi { width: 34px; height: 34px; }
 .folder-content { padding-top:4px; }
 .folder-head { display: flex; align-items: center; gap: 10px;
   margin-bottom: 12px; }
